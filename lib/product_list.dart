@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:provider/provider.dart';
+import 'package:shopping_cart_app/card_model.dart';
+import 'package:shopping_cart_app/cart_provider.dart';
+import 'package:shopping_cart_app/cart_screen.dart';
+import 'package:shopping_cart_app/db_helper.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -10,6 +15,7 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
 
+  DbHelper dbHelper =DbHelper();
   List<String> productName =['Mango', 'Grapes' , 'Orange', 'Banana' , 'Cheery' , 'Peach' , 'MixedFruit'] ;
   List<String> productUnit= ['KG' ,'Dozen', 'KG', 'Bozen', 'KG', 'KG', 'KG'];
   List<int> productPrice =[18, 20 ,30, 40, 58, 69, 70];
@@ -26,6 +32,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final cart = Provider.of<CartProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('Product List',
@@ -36,17 +44,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
         backgroundColor: Colors.blueAccent,
 
         actions: [
-          Center(
-            child: badges.Badge(
-              badgeContent: const Text(
-                '3',
-                style: TextStyle(color: Colors.white),
-              ),
+          InkWell(
+            onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
+            },
+            child: Center(
+              child: badges.Badge(
+                badgeContent:  Consumer<CartProvider>(
+                  builder: (context, value ,child){
+                    return  Text(value.getCounter().toString() ,
+                      style: TextStyle(color: Colors.white),
+                    );
+                  },
 
-              // position: badges.BadgePosition.topEnd(top: 0, end: 0),
-              child: const Icon(
-                Icons.shopping_bag_outlined,
-                color: Colors.white,
+
+                ),
+            
+                // position: badges.BadgePosition.topEnd(top: 0, end: 0),
+                child: const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -90,19 +108,43 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 fontWeight: FontWeight.w500,),),
                             Align(
                               alignment: Alignment.centerRight,
-                              child: Container(
-                                height: 35,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(5)
-                                ),
-                                child: Center(
-                                  child: Text('Add to cart',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white
-                                  ),),
+                              child: InkWell(
+                                onTap: (){
+                                  // final productName = productName[index] ?? 'Unknown';
+                                  // final productImage = productImage[index] ?? '';
+                                  dbHelper.insert(
+                                      Cart(
+                                          id: index,
+                                        productId: index.toString(),
+                                        productName: productName[index].toString() ,
+                                        initialPrice: productPrice[index] ,
+                                        productPrice: productPrice[index] ,
+                                        quantity: 1,
+                                        unitTags: productUnit[index].toString()  ,
+                                        images: productImage[index].toString(),)
+                                  ).then((value){
+                                    print('product is added to cart');
+                                    cart.addTottlePrice(double.parse(productPrice[index].toString()?? '0'));
+                                    cart.addCounter();
+
+                                  }).onError((error, stackTracer){
+                                    print(error.toString());
+                                  });
+                                },
+                                child: Container(
+                                  height: 35,
+                                  width: 100,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(5)
+                                  ),
+                                  child: Center(
+                                    child: Text('Add to cart',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white
+                                    ),),
+                                  ),
                                 ),
                               ),
                             )
@@ -118,6 +160,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
           );
 
       }),
-    );
+    
+     );
   }
 }
+

@@ -1,6 +1,6 @@
 class Cart{
 
-  late final int? id;
+   final int? id;
   final String? productId;
   final String? productName;
   final int? initialPrice;
